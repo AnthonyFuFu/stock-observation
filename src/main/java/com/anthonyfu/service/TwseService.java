@@ -17,8 +17,8 @@ public class TwseService {
 
     private final WebClient webClient;
     
-    public TwseService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder
+    public TwseService(WebClient webClient) {
+        this.webClient = webClient.mutate()
                 .baseUrl("https://www.twse.com.tw")
                 .defaultHeader("User-Agent", "Mozilla/5.0")
                 .build();

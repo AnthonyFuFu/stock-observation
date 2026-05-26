@@ -15,7 +15,7 @@ import com.anthonyfu.service.TwseService;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/twse")
+@RequestMapping("/twse")
 public class TwseController {
 	
 	@Autowired
