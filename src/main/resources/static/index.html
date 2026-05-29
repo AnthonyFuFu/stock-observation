@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Observation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    body { background-color: #0f172a; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ── 常數 ─────────────────────────────────────────────
+    const API = '/api';
+    const US_INDICES = [
+      { symbol: 'SPY', name: 'S&P 500',    flag: '🇺🇸' },
+      { symbol: 'QQQ', name: 'NASDAQ 100', flag: '💻' },
+      { symbol: 'DIA', name: 'Dow Jones',  flag: '🏛️' },
+    ];
+    const POPULAR = [
+      { label: 'AAPL',  tag: 'US' }, { label: 'TSLA',  tag: 'US' },
+      { label: 'NVDA',  tag: 'US' }, { label: 'GOOG',  tag: 'US' },
+      { label: 'MSFT',  tag: 'US' }, { label: 'META',  tag: 'US' },
+      { label: '2330',  tag: 'TW' }, { label: '0050',  tag: 'TW' },
+      { label: '2317',  tag: 'TW' }, { label: '2454',  tag: 'TW' },
+    ];
+
+    // ── 工具 ─────────────────────────────────────────────
+    const fmt    = (n, d = 2) => n != null ? Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '--';
+    const fmtPct = n => n != null ? (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%' : '--';
+    const goStock = sym => { window.location.href = `${API}/stock.html?symbol=${sym}`; };
+
+    // ── Clock ─────────────────────────────────────────────
+    const Clock = () => {
+      const [t, setT] = useState('');
+      useEffect(() => {
+        const tick = () => setT(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
+        tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+      }, []);
+      return <span className="text-slate-500 text-sm tabular-nums">{t}</span>;
+    };
+
+    // ── SearchBar ─────────────────────────────────────────
+    const SearchBar = () => {
+      const [val, setVal] = useState('');
+      const onSubmit = e => {
+        e.preventDefault();
+        const sym = val.trim().toUpperCase();
+        if (sym) goStock(sym);
+      };
+      return (
+        <form onSubmit={onSubmit} className="flex gap-2 w-full max-w-md">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+            <input
+              value={val}
+              onChange={e => setVal(e.target.value)}
+              placeholder="輸入股票代號 (AAPL, 2330, TSLA...)"
+              className="w-full bg-slate-700/60 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-slate-700 transition-all"
+            />
+          </div>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap">
+            查詢
+          </button>
+        </form>
+      );
+    };
+
+    // ── IndexCard ─────────────────────────────────────────
+    const IndexCard = ({ symbol, name, flag, quote, loading }) => {
+      const up = quote?.d != null ? quote.d >= 0 : null;
+      return (
+        <div onClick={() => goStock(symbol)}
+          className="cursor-pointer bg-slate-800 border border-slate-700 hover:border-blue-500 rounded-xl p-4 transition-all select-none">
+          <p className="text-slate-400 text-xs mb-1.5">{flag} {name}</p>
+          <p className="text-2xl font-bold text-slate-100 tabular-nums">
+            {loading ? <span className="text-slate-600">--</span> : fmt(quote?.c)}
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`text-sm font-semibold tabular-nums ${up === null ? 'text-slate-500' : up ? 'text-emerald-400' : 'text-red-400'}`}>
+              {loading ? '--' : fmtPct(quote?.dp)}
+            </span>
+            {!loading && up !== null && (
+              <span className={`text-xs tabular-nums ${up ? 'text-emerald-600' : 'text-red-600'}`}>
+                {up ? '+' : ''}{fmt(quote?.d)}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    // ── MarketOverview（4 cards：TAIEX + 3 US）─────────────
+    const TaiwanCard = ({ value, change, changePct, loading }) => {
+      const up = change != null ? change >= 0 : null;
+      return (
+        <div onClick={() => goStock('TAIEX')}
+          className="cursor-pointer bg-slate-800 border border-slate-700 hover:border-emerald-500 rounded-xl p-4 transition-all select-none">
+          <p className="text-slate-400 text-xs mb-1.5">🇹🇼 台灣加權指數</p>
+          <p className="text-2xl font-bold text-slate-100 tabular-nums">
+            {loading ? <span className="text-slate-600">--</span> : fmt(value, 2)}
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`text-sm font-semibold tabular-nums ${up === null ? 'text-slate-500' : up ? 'text-emerald-400' : 'text-red-400'}`}>
+              {loading ? '--' : fmtPct(changePct)}
+            </span>
+            {!loading && up !== null && (
+              <span className={`text-xs tabular-nums ${up ? 'text-emerald-600' : 'text-red-600'}`}>
+                {up ? '+' : ''}{fmt(change)}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const MarketOverview = () => {
+      const [usQuotes, setUsQuotes]   = useState({});
+      const [twData,   setTwData]     = useState(null);
+      const [loading,  setLoading]    = useState(true);
+
+      const fetchAll = useCallback(async () => {
+        const [usResult, twResult] = await Promise.allSettled([
+          Promise.allSettled(US_INDICES.map(i =>
+            fetch(`${API}/finnhub/quote/${i.symbol}`).then(r => r.json())
+          )),
+          fetch(`${API}/twse/taiex/candle`).then(r => r.json()),
+        ]);
+
+        if (usResult.status === 'fulfilled') {
+          const map = {};
+          usResult.value.forEach((r, i) => { if (r.status === 'fulfilled') map[US_INDICES[i].symbol] = r.value; });
+          setUsQuotes(map);
+        }
+        if (twResult.status === 'fulfilled') {
+          const pts = twResult.value;
+          if (pts?.length > 0) {
+            const last = pts[pts.length - 1];
+            const prev = pts.length > 1 ? pts[pts.length - 2] : null;
+            const change    = prev ? last.close - prev.close : null;
+            const changePct = prev ? (change / prev.close) * 100 : null;
+            setTwData({ value: last.close, change, changePct });
+          }
+        }
+        setLoading(false);
+      }, []);
+
+      useEffect(() => { fetchAll(); const id = setInterval(fetchAll, 30000); return () => clearInterval(id); }, [fetchAll]);
+
+      return (
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-slate-400 text-xs font-semibold uppercase tracking-widest">市場概覽</h2>
+            <span className="text-slate-600 text-xs">每 30 秒更新 · 點擊查看個股</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <TaiwanCard {...twData} loading={loading} />
+            {US_INDICES.map(i => (
+              <IndexCard key={i.symbol} {...i} quote={usQuotes[i.symbol]} loading={loading} />
+            ))}
+          </div>
+        </section>
+      );
+    };
+
+    // ── TaiwanMarket（台股大盤走勢圖）──────────────────────
+    const TaiwanMarket = () => {
+      const chartRef  = useRef(null);
+      const chartInst = useRef(null);
+      const [stats,   setStats]   = useState(null);
+      const [status,  setStatus]  = useState('loading');
+
+      useEffect(() => {
+        const load = async () => {
+          setStatus('loading');
+          try {
+            const data = await fetch(`${API}/twse/taiex/candle`).then(r => r.json());
+            if (!data?.length) { setStatus('nodata'); return; }
+
+            const last = data[data.length - 1];
+            const prev = data.length > 1 ? data[data.length - 2] : null;
+            const change    = prev ? last.close - prev.close : null;
+            const changePct = prev ? (change / prev.close) * 100 : null;
+            setStats({ value: last.close, change, changePct, points: data.length });
+
+            if (chartInst.current) { try { chartInst.current.destroy(); } catch (_) {} chartInst.current = null; }
+            if (!chartRef.current) { setStatus('idle'); return; }
+
+            const series = [{ name: '加權指數', data: data.map(d => [d.timestamp * 1000, d.close]) }];
+            const opts = {
+              chart: { type: 'area', height: 200, background: 'transparent', toolbar: { show: false }, animations: { enabled: false }, sparkline: { enabled: false } },
+              theme: { mode: 'dark' },
+              dataLabels: { enabled: false },
+              stroke: { curve: 'smooth', width: 2.5 },
+              fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.03 } },
+              colors: [change != null && change >= 0 ? '#10b981' : '#ef4444'],
+              xaxis: { type: 'datetime', labels: { style: { colors: '#64748b' }, format: 'MM/dd' }, axisBorder: { show: false }, axisTicks: { show: false } },
+              yaxis: { labels: { style: { colors: '#64748b' }, formatter: v => v != null ? Math.round(v).toLocaleString() : '' }, opposite: true, tickAmount: 4 },
+              grid: { borderColor: '#1e293b', strokeDashArray: 3, padding: { left: 4, right: 10 } },
+              tooltip: { theme: 'dark', x: { format: 'yyyy-MM-dd' }, y: { formatter: v => v?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) } },
+              series,
+            };
+            const chart = new ApexCharts(chartRef.current, opts);
+            await chart.render();
+            chartInst.current = chart;
+            setStatus('idle');
+          } catch (e) {
+            console.error(e);
+            setStatus('error');
+          }
+        };
+        load();
+        return () => { if (chartInst.current) { try { chartInst.current.destroy(); } catch (_) {} } };
+      }, []);
+
+      const up = stats?.change != null ? stats.change >= 0 : null;
+
+      return (
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-slate-400 text-xs font-semibold uppercase tracking-widest">台股大盤走勢</h2>
+            <button onClick={() => goStock('TAIEX')}
+              className="text-blue-400 hover:text-blue-300 text-xs transition-colors">
+              查看詳情 →
+            </button>
+          </div>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+            {/* 標題與數字 */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-slate-400 text-sm mb-1">🇹🇼 台灣加權股價指數（TAIEX）</p>
+                <p className="text-3xl font-bold tabular-nums text-slate-100">
+                  {status === 'loading' ? <span className="text-slate-600">--</span> : fmt(stats?.value, 2)}
+                </p>
+                {stats && (
+                  <p className="text-slate-500 text-xs mt-1">
+                    當月 {stats.points} 個交易日
+                  </p>
+                )}
+              </div>
+              {stats && up !== null && (
+                <div className={`text-right px-3 py-2 rounded-xl ${up ? 'bg-emerald-900/30 border border-emerald-800/50' : 'bg-red-900/30 border border-red-800/50'}`}>
+                  <p className={`text-xl font-bold tabular-nums ${up ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {fmtPct(stats?.changePct)}
+                  </p>
+                  <p className={`text-sm tabular-nums ${up ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {up ? '+' : ''}{fmt(stats?.change)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 圖表區 */}
+            {status === 'loading' && (
+              <div className="flex items-center justify-center" style={{ height: 200 }}>
+                <div className="w-6 h-6 border-2 border-slate-600 border-t-emerald-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+            {status === 'error' && (
+              <div className="flex items-center justify-center text-slate-500" style={{ height: 200 }}>
+                <p className="text-sm">⚠ 資料載入失敗（非交易時段或 TWSE 暫時不可用）</p>
+              </div>
+            )}
+            {status === 'nodata' && (
+              <div className="flex items-center justify-center text-slate-500" style={{ height: 200 }}>
+                <p className="text-sm">暫無資料</p>
+              </div>
+            )}
+            <div ref={chartRef} className={status !== 'idle' ? 'hidden' : ''}></div>
+          </div>
+        </section>
+      );
+    };
+
+    // ── PopularStocks（熱門股票快速入口）──────────────────
+    const PopularStocks = () => (
+      <section className="mb-6">
+        <h2 className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">熱門股票</h2>
+        <div className="flex flex-wrap gap-2">
+          {POPULAR.map(s => (
+            <button key={s.label} onClick={() => goStock(s.label)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all hover:scale-105
+                ${s.tag === 'US'
+                  ? 'border-blue-800/60 text-blue-400 hover:bg-blue-900/30 hover:border-blue-600'
+                  : 'border-emerald-800/60 text-emerald-400 hover:bg-emerald-900/30 hover:border-emerald-600'}`}>
+              {s.label}
+              <span className={`ml-1.5 text-[10px] ${s.tag === 'US' ? 'text-blue-600' : 'text-emerald-700'}`}>{s.tag}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+
+    // ── App ───────────────────────────────────────────────
+    const App = () => (
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+        {/* Header */}
+        <header className="border-b border-slate-800 px-6 py-4">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-2xl">📈</span>
+              <div>
+                <h1 className="font-bold text-slate-100 leading-tight">Stock Observation</h1>
+                <p className="text-slate-500 text-xs">股票觀察儀表板</p>
+              </div>
+            </div>
+            <div className="flex-1 min-w-[240px]">
+              <SearchBar />
+            </div>
+            <Clock />
+          </div>
+        </header>
+
+        {/* Main */}
+        <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1">
+          <MarketOverview />
+          <TaiwanMarket />
+          <PopularStocks />
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-800 px-6 py-3 text-center text-slate-600 text-xs">
+          資料來源：
+          <a href="https://finnhub.io" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-300 transition-colors">Finnhub</a>
+          {' '}（美股）｜
+          <a href="https://www.twse.com.tw" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-300 transition-colors">TWSE</a>
+          {' '}（台股）
+        </footer>
+      </div>
+    );
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
+import com.anthonyfu.model.CandlePoint;
 import com.anthonyfu.model.CompanyInfo;
 import com.anthonyfu.model.MarketInfo;
 import com.anthonyfu.model.StockDailyInfo;
@@ -38,5 +41,17 @@ public class TwseController {
     @GetMapping("/company")
     public Mono<CompanyInfo> searchCompany(@RequestParam String query) {
         return twseService.getCompanyInfo(query);
+    }
+
+    // http://localhost:8080/api/twse/candle/2330  → 個股當月日K棒
+    @GetMapping("/candle/{code}")
+    public Mono<List<CandlePoint>> getStockCandle(@PathVariable String code) {
+        return twseService.getStockCandles(code);
+    }
+
+    // http://localhost:8080/api/twse/taiex/candle?date=20240101  → 加權指數當月K棒
+    @GetMapping("/taiex/candle")
+    public Mono<List<CandlePoint>> getTaiexCandle(@RequestParam(required = false) String date) {
+        return twseService.getTaiexCandles(date);
     }
 }

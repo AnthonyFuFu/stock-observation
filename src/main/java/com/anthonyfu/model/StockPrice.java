@@ -40,6 +40,13 @@ public class StockPrice {
     
     @Column("adjusted_close")
     private BigDecimal adjustedClose;
-    
-    private Long volume;
+
+    @Column("change_price")
+    private BigDecimal changePrice;   // 漲跌金額
+
+    private Long volume;              // 成交股數
+
+    private Long turnover;            // 成交金額（元）
+
+    private Integer transactions;     // 成交筆數
 }

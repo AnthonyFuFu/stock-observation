@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Observation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    body { background-color: #0f172a; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ── URL params ────────────────────────────────────────
+    const SYMBOL = (new URLSearchParams(window.location.search).get('symbol') || 'AAPL').toUpperCase();
+    const API    = '/api';
+
+    // ── 工具 ─────────────────────────────────────────────
+    const fmt    = (n, d = 2) => n != null ? Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '--';
+    const fmtPct = n => n != null ? (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%' : '--';
+    const isTW    = s => s === 'TAIEX' || /^\d/.test(s);
+    const isTaiex = s => s === 'TAIEX' || s === 'Y9999';
+
+    // ── Chart options ─────────────────────────────────────
+    const candleOpts = (series) => ({
+      chart: {
+        type: 'candlestick', height: 480, background: 'transparent', foreColor: '#94a3b8',
+        toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true } },
+        animations: { enabled: false },
+      },
+      theme: { mode: 'dark' },
+      plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' }, wick: { useFillColor: true } } },
+      xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { color: '#334155' }, axisTicks: { color: '#334155' } },
+      yaxis: { tooltip: { enabled: true }, labels: { style: { colors: '#94a3b8' }, formatter: v => fmt(v) }, opposite: true },
+      grid: { borderColor: '#1e293b', strokeDashArray: 3 },
+      tooltip: { theme: 'dark' },
+      series,
+    });
+
+    const lineOpts = (series, color) => ({
+      chart: {
+        type: 'area', height: 480, background: 'transparent', foreColor: '#94a3b8',
+        toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true } },
+        animations: { enabled: false },
+      },
+      theme: { mode: 'dark' },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.03 } },
+      colors: [color || '#3b82f6'],
+      xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { color: '#334155' }, axisTicks: { color: '#334155' } },
+      yaxis: { labels: { style: { colors: '#94a3b8' }, formatter: v => fmt(v) }, opposite: true },
+      grid: { borderColor: '#1e293b', strokeDashArray: 3 },
+      tooltip: { theme: 'dark', x: { format: 'yyyy-MM-dd' } },
+      series,
+    });
+
+    // ── US timeframes ─────────────────────────────────────
+    const US_TF = [
+      { label: '1M',  resolution: 'D', days: 30   },
+      { label: '3M',  resolution: 'D', days: 90   },
+      { label: '6M',  resolution: 'D', days: 180  },
+      { label: '1Y',  resolution: 'W', days: 365  },
+      { label: '3Y',  resolution: 'M', days: 1095 },
+    ];
+
+    // ── Clock ─────────────────────────────────────────────
+    const Clock = () => {
+      const [t, setT] = useState('');
+      useEffect(() => {
+        const tick = () => setT(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
+        tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+      }, []);
+      return <span className="text-slate-500 text-sm tabular-nums">{t}</span>;
+    };
+
+    // ── CompanyHeader ─────────────────────────────────────
+    const CompanyHeader = () => {
+      const [info, setInfo] = useState({ name: SYMBOL, exchange: '', industry: '' });
+
+      useEffect(() => {
+        if (isTaiex(SYMBOL)) {
+          setInfo({ name: '台灣加權股價指數', exchange: 'TWSE', industry: '指數' });
+          return;
+        }
+        if (isTW(SYMBOL)) {
+          fetch(`${API}/twse/company?query=${SYMBOL}`)
+            .then(r => r.json())
+            .then(d => {
+              const sug = d?.suggestions?.[0];
+              if (sug) {
+                const parts = sug.split('\t');
+                setInfo({ name: parts[1] || SYMBOL, exchange: 'TWSE', industry: '' });
+              }
+            }).catch(() => {});
+          return;
+        }
+        fetch(`${API}/finnhub/profile/${SYMBOL}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d?.name) setInfo({ name: d.name, exchange: d.exchange || '', industry: d.finnhubIndustry || '' });
+          }).catch(() => {});
+      }, []);
+
+      return (
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-4xl font-extrabold text-slate-100 tracking-tight">{SYMBOL}</h1>
+            {info.exchange && (
+              <span className="text-xs bg-slate-700 text-slate-400 px-2.5 py-1 rounded-full border border-slate-600">
+                {info.exchange}
+              </span>
+            )}
+            {info.industry && (
+              <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">
+                {info.industry}
+              </span>
+            )}
+          </div>
+          <p className="text-slate-400 mt-1">{info.name}</p>
+        </div>
+      );
+    };
+
+    // ── StatItem ──────────────────────────────────────────
+    const StatItem = ({ label, value }) => (
+      <div className="bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-700/50">
+        <p className="text-slate-500 text-xs mb-1">{label}</p>
+        <p className="text-slate-200 font-semibold tabular-nums text-sm">{value}</p>
+      </div>
+    );
+
+    // ── QuoteCard ─────────────────────────────────────────
+    const QuoteCard = () => {
+      const [q, setQ]       = useState(null);
+      const [loading, setL] = useState(true);
+
+      const fetchQuote = useCallback(async () => {
+        try {
+          if (isTaiex(SYMBOL)) {
+            const data = await fetch(`${API}/twse/taiex/candle`).then(r => r.json());
+            if (data?.length > 0) {
+              const last = data[data.length - 1];
+              const prev = data.length > 1 ? data[data.length - 2] : null;
+              const d  = prev ? last.close - prev.close : null;
+              const dp = prev ? (d / prev.close) * 100 : null;
+              setQ({ c: last.close, d, dp, o: last.open, h: last.high, l: last.low, pc: prev?.close, v: last.volume });
+            }
+          } else if (isTW(SYMBOL)) {
+            const data = await fetch(`${API}/twse/candle/${SYMBOL}`).then(r => r.json());
+            if (data?.length > 0) {
+              const last = data[data.length - 1];
+              const prev = data.length > 1 ? data[data.length - 2] : null;
+              const d  = prev ? last.close - prev.close : null;
+              const dp = prev ? (d / prev.close) * 100 : null;
+              setQ({ c: last.close, d, dp, o: last.open, h: last.high, l: last.low, pc: prev?.close, v: last.volume });
+            }
+          } else {
+            const data = await fetch(`${API}/finnhub/quote/${SYMBOL}`).then(r => r.json());
+            setQ(data);
+          }
+        } catch (_) {} finally { setL(false); }
+      }, []);
+
+      useEffect(() => { fetchQuote(); const id = setInterval(fetchQuote, 30000); return () => clearInterval(id); }, [fetchQuote]);
+
+      if (loading) return (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6 animate-pulse">
+          <div className="h-12 bg-slate-700 rounded mb-4 w-52"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[1,2,3,4].map(i => <div key={i} className="h-16 bg-slate-700 rounded-xl"></div>)}
+          </div>
+        </div>
+      );
+
+      if (!q) return (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6 text-slate-500 text-sm">
+          無法取得報價資料
+        </div>
+      );
+
+      const up = q.d != null ? q.d >= 0 : null;
+      return (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
+          {/* 主要價格 */}
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+            <div>
+              <p className="text-5xl font-extrabold tabular-nums text-slate-100 tracking-tight">
+                {fmt(q.c)}
+              </p>
+              <div className="flex items-center gap-3 mt-2.5">
+                <span className={`text-xl font-bold tabular-nums ${up === null ? 'text-slate-400' : up ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {up === null ? '--' : `${up ? '+' : ''}${fmt(q.d)}`}
+                </span>
+                <span className={`text-base font-semibold px-3 py-1 rounded-lg ${up === null ? 'bg-slate-700 text-slate-400' : up ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-800/50' : 'bg-red-900/40 text-red-400 border border-red-800/50'}`}>
+                  {fmtPct(q.dp)}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-600 text-xs">每 30 秒自動更新</p>
+              {isTW(SYMBOL) && <p className="text-slate-600 text-xs mt-1">⚠ 台股為收盤後資料</p>}
+            </div>
+          </div>
+          {/* 統計數字 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatItem label="開盤" value={fmt(q.o)} />
+            <StatItem label="最高" value={fmt(q.h)} />
+            <StatItem label="最低" value={fmt(q.l)} />
+            <StatItem label="前收" value={fmt(q.pc)} />
+          </div>
+        </div>
+      );
+    };
+
+    // ── StockChart ────────────────────────────────────────
+    const StockChart = () => {
+      const chartRef  = useRef(null);
+      const chartInst = useRef(null);
+      const [tf,   setTf]     = useState(isTW(SYMBOL) ? '當月' : '3M');
+      const [type, setType]   = useState('candlestick');
+      const [status, setSt]   = useState('idle');
+
+      const destroy = () => {
+        if (chartInst.current) { try { chartInst.current.destroy(); } catch (_) {} chartInst.current = null; }
+      };
+
+      const load = useCallback(async () => {
+        if (!chartRef.current) return;
+        setSt('loading');
+        destroy();
+        try {
+          let data;
+          if (isTaiex(SYMBOL)) {
+            data = await fetch(`${API}/twse/taiex/candle`).then(r => r.json());
+          } else if (isTW(SYMBOL)) {
+            data = await fetch(`${API}/twse/candle/${SYMBOL}`).then(r => r.json());
+          } else {
+            const frame = US_TF.find(t => t.label === tf) || US_TF[1];
+            data = await fetch(`${API}/finnhub/candle/${SYMBOL}?resolution=${frame.resolution}&days=${frame.days}`).then(r => r.json());
+          }
+
+          if (!data?.length) { setSt('nodata'); return; }
+
+          // 判斷漲跌，折線圖顏色用最後一根
+          const first = data[0];
+          const last  = data[data.length - 1];
+          const lineColor = last.close >= first.close ? '#22c55e' : '#ef4444';
+
+          let opts;
+          if (type === 'candlestick') {
+            const series = [{ name: SYMBOL, data: data.map(d => ({ x: new Date(d.timestamp * 1000), y: [d.open, d.high, d.low, d.close] })) }];
+            opts = candleOpts(series);
+          } else {
+            const series = [{ name: SYMBOL, data: data.map(d => [d.timestamp * 1000, d.close]) }];
+            opts = lineOpts(series, lineColor);
+          }
+
+          const chart = new ApexCharts(chartRef.current, opts);
+          await chart.render();
+          chartInst.current = chart;
+          setSt('idle');
+        } catch (e) {
+          console.error(e);
+          setSt('error');
+        }
+      }, [tf, type]);
+
+      useEffect(() => { load(); return destroy; }, [load]);
+
+      return (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+          {/* 控制列 */}
+          <div className="flex flex-wrap gap-3 items-center mb-5">
+            {/* 時間週期（台股固定當月，不顯示） */}
+            {!isTW(SYMBOL) && (
+              <div className="flex gap-1 bg-slate-900/60 rounded-xl p-1 border border-slate-700/50">
+                {US_TF.map(t => (
+                  <button key={t.label} onClick={() => setTf(t.label)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tf === t.label ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* K棒 / 折線圖 */}
+            <div className="flex gap-1 bg-slate-900/60 rounded-xl p-1 border border-slate-700/50">
+              {[{ v: 'candlestick', l: 'K棒' }, { v: 'line', l: '折線圖' }].map(t => (
+                <button key={t.v} onClick={() => setType(t.v)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${type === t.v ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
+                  {t.l}
+                </button>
+              ))}
+            </div>
+            {/* 台股提示 */}
+            {isTW(SYMBOL) && !isTaiex(SYMBOL) && (
+              <span className="text-slate-500 text-xs">⚠ 僅顯示當月資料</span>
+            )}
+          </div>
+
+          {/* 狀態 */}
+          {status === 'loading' && (
+            <div className="flex flex-col items-center justify-center gap-3" style={{ height: 480 }}>
+              <div className="w-10 h-10 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
+              <span className="text-slate-500 text-sm">載入圖表中...</span>
+            </div>
+          )}
+          {status === 'error' && (
+            <div className="flex flex-col items-center justify-center text-red-400 gap-3" style={{ height: 480 }}>
+              <span className="text-5xl">⚠️</span>
+              <p className="text-sm">圖表載入失敗，請確認代號是否正確</p>
+            </div>
+          )}
+          {status === 'nodata' && (
+            <div className="flex flex-col items-center justify-center text-slate-500 gap-2" style={{ height: 480 }}>
+              <span className="text-4xl">📭</span>
+              <p className="text-sm">查無資料（非交易時段或代號錯誤）</p>
+            </div>
+          )}
+          <div ref={chartRef} className={status !== 'idle' ? 'hidden' : ''}></div>
+        </div>
+      );
+    };
+
+    // ── SearchInline（頁面內快速搜尋） ───────────────────
+    const SearchInline = () => {
+      const [val, setVal] = useState('');
+      const onSubmit = e => {
+        e.preventDefault();
+        const sym = val.trim().toUpperCase();
+        if (sym) window.location.href = `/api/stock.html?symbol=${sym}`;
+      };
+      return (
+        <form onSubmit={onSubmit} className="flex gap-2">
+          <input
+            value={val}
+            onChange={e => setVal(e.target.value)}
+            placeholder="換一支股票..."
+            className="bg-slate-700/50 border border-slate-600 text-slate-200 placeholder-slate-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-44 transition-all"
+          />
+          <button type="submit" className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg text-sm transition-colors">
+            Go
+          </button>
+        </form>
+      );
+    };
+
+    // ── App ───────────────────────────────────────────────
+    const App = () => (
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+        {/* Header */}
+        <header className="border-b border-slate-800 px-6 py-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              {/* 返回 */}
+              <button onClick={() => window.location.href = '/api/'}
+                className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-sm transition-colors group">
+                <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                <span>返回大盤</span>
+              </button>
+              <div className="w-px h-5 bg-slate-700"></div>
+              {/* Logo */}
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📈</span>
+                <span className="font-semibold text-slate-300 text-sm hidden sm:inline">Stock Observation</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <SearchInline />
+              <Clock />
+            </div>
+          </div>
+        </header>
+
+        {/* Main */}
+        <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1">
+          {/* 股票標題 */}
+          <div className="mb-6">
+            <CompanyHeader />
+          </div>
+          {/* 報價卡片 */}
+          <QuoteCard />
+          {/* 圖表 */}
+          <StockChart />
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-800 px-6 py-3 text-center text-slate-600 text-xs mt-4">
+          資料來源：
+          <a href="https://finnhub.io" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-300 transition-colors">Finnhub</a>
+          {' '}（美股）｜
+          <a href="https://www.twse.com.tw" target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-300 transition-colors">TWSE</a>
+          {' '}（台股，每日收盤後更新）
+        </footer>
+      </div>
+    );
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
