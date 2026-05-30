@@ -11,27 +11,17 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.anthonyfu.model.Stock;
+import com.anthonyfu.model.entity.Stock;
 import com.anthonyfu.repository.StockRepository;
 
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * 從 TWSE ISIN 頁面批次匯入全台股基本資料（約 1700+ 支）
- *
- * 資料來源：https://isin.twse.com.tw/isin/C_public.jsp
- *   strMode=2  → 台灣證券交易所（TWSE 上市）
- *   strMode=4  → 證券櫃檯買賣中心（TPEx 上櫃）
- *
- * 頁面使用 Big5 編碼，需手動轉換。
- */
 @Slf4j
 @Service
 public class TwseStockImportService {
-
-    private static final String ISIN_BASE = "https://isin.twse.com.tw/isin/C_public.jsp";
+	
     private static final Charset BIG5     = Charset.forName("Big5");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 

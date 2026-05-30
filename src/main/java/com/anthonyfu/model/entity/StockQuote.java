@@ -1,4 +1,4 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 public class StockQuote {
     @Id
     private Long id;
-    
+
     @Column("stock_id")
     private Long stockId;
 

@@ -3,9 +3,9 @@ package com.anthonyfu.repository;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
-import com.anthonyfu.model.Stock;
-import com.anthonyfu.model.StockConceptCategory;
-import com.anthonyfu.model.StockConceptRelation;
+import com.anthonyfu.model.entity.Stock;
+import com.anthonyfu.model.entity.StockConceptCategory;
+import com.anthonyfu.model.entity.StockConceptRelation;
 
 import reactor.core.publisher.Flux;
 

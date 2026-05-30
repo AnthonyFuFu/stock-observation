@@ -1,4 +1,4 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,25 +19,25 @@ import java.time.LocalDate;
 public class StockPrice {
     @Id
     private Long id;
-    
+
     @Column("stock_id")
     private Long stockId;
-    
+
     @Column("trade_date")
     private LocalDate tradeDate;
-    
+
     @Column("open_price")
     private BigDecimal openPrice;
-    
+
     @Column("high_price")
     private BigDecimal highPrice;
-    
+
     @Column("low_price")
     private BigDecimal lowPrice;
-    
+
     @Column("close_price")
     private BigDecimal closePrice;
-    
+
     @Column("adjusted_close")
     private BigDecimal adjustedClose;
 

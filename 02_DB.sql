@@ -1,38 +1,24 @@
--- ═══════════════════════════════════════════════════════════════
---  02_DB.sql  ─  App Schema + Concept Categories
---  Stock Observation Database  v2.0
---
---  包含資料表：
---    users / watchlists /
---    stock_concept_categories / stock_concept_relations
---
---  ⚠ 執行順序：
---    1. psql -f 01_DB.sql           ← 建立股票市場資料表
---    2. psql -f DB_twse_full.sql    ← 匯入全台股（2308 筆）
---    3. psql -f 02_DB.sql           ← 本檔：建立應用層表、概念股分類並寫入關聯
--- ═══════════════════════════════════════════════════════════════
-
 -- ────────────────────────────────────────────────────────────────
 -- 一、應用層資料表
 -- ────────────────────────────────────────────────────────────────
 
 -- 用戶表
 CREATE TABLE IF NOT EXISTS users (
-    id            SERIAL PRIMARY KEY,
-    username      VARCHAR(50)  NOT NULL UNIQUE,
-    email         VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_login    TIMESTAMP WITH TIME ZONE
+    id            SERIAL PRIMARY KEY,                                        -- 自動遞增主鍵
+    username      VARCHAR(50)  NOT NULL UNIQUE,                              -- 用戶帳號（唯一）
+    email         VARCHAR(100) NOT NULL UNIQUE,                              -- 電子信箱（唯一）
+    password_hash VARCHAR(255) NOT NULL,                                     -- bcrypt 雜湊密碼
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,        -- 註冊時間
+    last_login    TIMESTAMP WITH TIME ZONE                                   -- 最後登入時間
 );
 
 -- 自選股表
 CREATE TABLE IF NOT EXISTS watchlists (
-    id       SERIAL PRIMARY KEY,
-    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    stock_id INTEGER NOT NULL REFERENCES stocks(id) ON DELETE CASCADE,
-    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    notes    TEXT,
+    id       SERIAL PRIMARY KEY,                                              -- 自動遞增主鍵
+    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,        -- 對應 users.id
+    stock_id INTEGER NOT NULL REFERENCES stocks(id) ON DELETE CASCADE,       -- 對應 stocks.id
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,             -- 加入自選股時間
+    notes    TEXT,                                                            -- 備忘錄（可選）
     UNIQUE (user_id, stock_id)
 );
 
@@ -41,18 +27,18 @@ CREATE TABLE IF NOT EXISTS watchlists (
 -- ────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS stock_concept_categories (
-    id          SERIAL PRIMARY KEY,
-    code        VARCHAR(20)  NOT NULL UNIQUE,  -- 分類代碼
-    name        VARCHAR(50)  NOT NULL,          -- 中文名稱
-    description TEXT,
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    id          SERIAL PRIMARY KEY,                                           -- 自動遞增主鍵
+    code        VARCHAR(20)  NOT NULL UNIQUE,                                 -- 分類代碼 (AI, NVIDIA ...)
+    name        VARCHAR(50)  NOT NULL,                                        -- 中文分類名稱
+    description TEXT,                                                         -- 分類說明
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP            -- 建立時間
 );
 
 CREATE TABLE IF NOT EXISTS stock_concept_relations (
-    id          SERIAL PRIMARY KEY,
-    stock_id    INTEGER      NOT NULL REFERENCES stocks(id) ON DELETE CASCADE,
-    category_id INTEGER      NOT NULL REFERENCES stock_concept_categories(id) ON DELETE CASCADE,
-    weight      DECIMAL(5,2) NOT NULL DEFAULT 1.0,  -- 關聯權重
+    id          SERIAL PRIMARY KEY,                                                                   -- 自動遞增主鍵
+    stock_id    INTEGER      NOT NULL REFERENCES stocks(id) ON DELETE CASCADE,                       -- 對應 stocks.id
+    category_id INTEGER      NOT NULL REFERENCES stock_concept_categories(id) ON DELETE CASCADE,     -- 對應分類 id
+    weight      DECIMAL(5,2) NOT NULL DEFAULT 1.0,                                                   -- 關聯強度（1.0=主要概念股）
     UNIQUE (stock_id, category_id)
 );
 

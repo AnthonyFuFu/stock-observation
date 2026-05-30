@@ -1,10 +1,11 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.finnhub;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
+/** Finnhub /stock/candle API 回應結構 */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FinnhubCandle {
@@ -12,7 +13,7 @@ public class FinnhubCandle {
     private List<Double> h;  // high prices
     private List<Double> l;  // low prices
     private List<Double> o;  // open prices
-    private String s;         // status: "ok" or "no_data"
+    private String s;        // status: "ok" or "no_data"
     private List<Long> t;    // timestamps (Unix seconds)
     private List<Double> v;  // volumes
 }

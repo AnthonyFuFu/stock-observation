@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.anthonyfu.model.Stock;
-import com.anthonyfu.model.StockConceptCategory;
+import com.anthonyfu.model.entity.Stock;
+import com.anthonyfu.model.entity.StockConceptCategory;
 import com.anthonyfu.repository.StockConceptCategoryRepository;
 import com.anthonyfu.repository.StockConceptRelationRepository;
 import com.anthonyfu.repository.StockRepository;

@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.anthonyfu.model.CandlePoint;
-import com.anthonyfu.model.FinnhubProfile;
-import com.anthonyfu.model.FinnhubQuote;
+import com.anthonyfu.model.finnhub.FinnhubProfile;
+import com.anthonyfu.model.finnhub.FinnhubQuote;
 import com.anthonyfu.service.FinnhubService;
 
 import lombok.RequiredArgsConstructor;

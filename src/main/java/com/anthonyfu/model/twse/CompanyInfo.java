@@ -1,19 +1,19 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.twse;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Data;
 
+/** TWSE zh/api/codeQuery 公司查詢 API 回應結構 */
 @Data
 public class CompanyInfo {
     private String query;
     private List<String> suggestions;
-    
-    // 輔助方法：獲取解析後的建議列表
+
     public List<CompanySuggestion> getParsedSuggestions() {
         List<CompanySuggestion> result = new ArrayList<>();
-        
+
         if (suggestions != null) {
             for (String suggestion : suggestions) {
                 String[] parts = suggestion.split("\t");
@@ -25,11 +25,10 @@ public class CompanyInfo {
                 }
             }
         }
-        
+
         return result;
     }
-    
-    // 內部類：表示一個公司建議
+
     @Data
     public static class CompanySuggestion {
         private String code; // 股票代碼

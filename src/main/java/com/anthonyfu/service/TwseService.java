@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.anthonyfu.model.CandlePoint;
-import com.anthonyfu.model.CompanyInfo;
-import com.anthonyfu.model.MarketInfo;
-import com.anthonyfu.model.StockDailyInfo;
+import com.anthonyfu.model.twse.CompanyInfo;
+import com.anthonyfu.model.twse.MarketInfo;
+import com.anthonyfu.model.twse.StockDailyInfo;
 
 import reactor.core.publisher.Mono;
 

@@ -3,9 +3,9 @@ package com.anthonyfu.service;
 import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
-import com.anthonyfu.model.Stock;
-import com.anthonyfu.model.StockPrice;
-import com.anthonyfu.model.StockQuote;
+import com.anthonyfu.model.entity.Stock;
+import com.anthonyfu.model.entity.StockPrice;
+import com.anthonyfu.model.entity.StockQuote;
 import com.anthonyfu.repository.StockPriceRepository;
 import com.anthonyfu.repository.StockQuoteRepository;
 import com.anthonyfu.repository.StockRepository;

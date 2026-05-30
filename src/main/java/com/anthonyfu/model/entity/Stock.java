@@ -1,4 +1,4 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

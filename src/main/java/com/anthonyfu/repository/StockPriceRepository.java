@@ -3,7 +3,7 @@ package com.anthonyfu.repository;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
-import com.anthonyfu.model.StockPrice;
+import com.anthonyfu.model.entity.StockPrice;
 
 import reactor.core.publisher.Flux;
 

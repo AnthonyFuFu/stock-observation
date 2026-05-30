@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.anthonyfu.model.Stock;
-import com.anthonyfu.model.StockPrice;
-import com.anthonyfu.model.StockQuote;
+import com.anthonyfu.model.entity.Stock;
+import com.anthonyfu.model.entity.StockPrice;
+import com.anthonyfu.model.entity.StockQuote;
 import com.anthonyfu.service.StockService;
 
 import lombok.RequiredArgsConstructor;

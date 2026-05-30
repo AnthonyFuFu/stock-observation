@@ -1,6 +1,6 @@
-package com.anthonyfu.model;
+package com.anthonyfu.model.entity;
 
-import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -15,18 +15,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("stock_concept_relations")
-public class StockConceptRelation {
+@Table("stock_concept_categories")
+public class StockConceptCategory {
 
     @Id
     private Long id;
 
-    @Column("stock_id")
-    private Long stockId;
+    private String code;        // 分類代碼 (AI, NVIDIA, APPLE ...)
+    private String name;        // 中文名稱
+    private String description;
 
-    @Column("category_id")
-    private Long categoryId;
-
-    @Builder.Default
-    private BigDecimal weight = BigDecimal.ONE;  // 關聯權重（1.0 = 主要概念股）
+    @Column("created_at")
+    private ZonedDateTime createdAt;
 }
