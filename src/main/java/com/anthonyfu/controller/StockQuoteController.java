@@ -1,0 +1,66 @@
+package com.anthonyfu.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.anthonyfu.model.entity.StockQuote;
+import com.anthonyfu.service.StockQuoteService;
+
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/quotes")
+@RequiredArgsConstructor
+public class StockQuoteController {
+
+    private final StockQuoteService stockQuoteService;
+
+    // GET /api/quotes/2330
+    @GetMapping("/{symbol}")
+    public Mono<StockQuote> getQuoteBySymbol(@PathVariable String symbol) {
+        return stockQuoteService.getQuoteBySymbol(symbol);
+    }
+
+    // GET /api/quotes/top-movers?limit=10
+    @GetMapping("/top-movers")
+    public Flux<StockQuote> getTopMovers(@RequestParam(defaultValue = "10") int limit) {
+        return stockQuoteService.getTopMovers(limit);
+    }
+
+    // GET /api/quotes/sector/半導體
+    @GetMapping("/sector/{sector}")
+    public Flux<StockQuote> getQuotesBySector(@PathVariable String sector) {
+        return stockQuoteService.getQuotesBySector(sector);
+    }
+
+    // POST /api/quotes
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<StockQuote> createQuote(@RequestBody StockQuote quote) {
+        return stockQuoteService.createQuote(quote);
+    }
+
+    // PUT /api/quotes/{id}
+    @PutMapping("/{id}")
+    public Mono<StockQuote> updateQuote(@PathVariable Long id, @RequestBody StockQuote quote) {
+        return stockQuoteService.updateQuote(id, quote);
+    }
+
+    // DELETE /api/quotes/{id}
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteQuote(@PathVariable Long id) {
+        return stockQuoteService.deleteQuote(id);
+    }
+}

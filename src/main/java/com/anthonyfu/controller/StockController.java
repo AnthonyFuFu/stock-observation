@@ -3,12 +3,16 @@ package com.anthonyfu.controller;
 import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.anthonyfu.model.entity.Stock;
@@ -62,7 +66,21 @@ public class StockController {
     }
     
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Mono<Stock> createStock(@RequestBody Stock stock) {
         return stockService.createStock(stock);
+    }
+
+    // PUT /api/stocks/2330
+    @PutMapping("/{symbol}")
+    public Mono<Stock> updateStock(@PathVariable String symbol, @RequestBody Stock stock) {
+        return stockService.updateStock(symbol, stock);
+    }
+
+    // DELETE /api/stocks/2330
+    @DeleteMapping("/{symbol}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteStock(@PathVariable String symbol) {
+        return stockService.deleteStock(symbol);
     }
 }

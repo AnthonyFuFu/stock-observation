@@ -55,4 +55,17 @@ public class StockService {
     public Mono<StockQuote> updateQuote(StockQuote quote) {
         return stockQuoteRepository.save(quote);
     }
+
+    public Mono<Stock> updateStock(String symbol, Stock stock) {
+        return stockRepository.findBySymbol(symbol)
+                .flatMap(existing -> {
+                    stock.setId(existing.getId());
+                    return stockRepository.save(stock);
+                });
+    }
+
+    public Mono<Void> deleteStock(String symbol) {
+        return stockRepository.findBySymbol(symbol)
+                .flatMap(stockRepository::delete);
+    }
 }
