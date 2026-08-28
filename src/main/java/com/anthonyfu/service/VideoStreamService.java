@@ -4,7 +4,6 @@ import com.anthonyfu.common.MediaTypeResolver;
 import com.anthonyfu.common.RangeRequest;
 
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,13 +20,11 @@ import java.io.InputStream;
 @Service
 public class VideoStreamService {
 
-	private final ResourceLoader resourceLoader;
+	private final VideoStorageService videoStorageService;
 	private final WebClient webClient;
 
-	private final String localPath = "classpath:videos/";
-
-	public VideoStreamService(ResourceLoader resourceLoader, WebClient webClient) {
-		this.resourceLoader = resourceLoader;
+	public VideoStreamService(VideoStorageService videoStorageService, WebClient webClient) {
+		this.videoStorageService = videoStorageService;
 		this.webClient = webClient;
 	}
 
@@ -72,9 +69,10 @@ public class VideoStreamService {
 	// ========================================
 
 	private Mono<Resource> loadResource(String filename) {
-		return Mono.fromSupplier(() -> resourceLoader.getResource(localPath + filename)).filter(Resource::exists)
+		return videoStorageService.resolve(filename)
 				.switchIfEmpty(Mono.error(new RuntimeException("影片不存在: " + filename)));
 	}
+
 
 	private long getContentLength(Resource resource) {
 		try {

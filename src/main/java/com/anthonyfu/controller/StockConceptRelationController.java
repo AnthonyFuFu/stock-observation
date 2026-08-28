@@ -24,45 +24,43 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class StockConceptRelationController {
 
-    private final StockConceptRelationService relationService;
+	private final StockConceptRelationService relationService;
 
-    // GET /api/concept-relations/stock/{stockId}
-    @GetMapping("/stock/{stockId}")
-    public Flux<StockConceptRelation> getRelationsByStockId(@PathVariable Long stockId) {
-        return relationService.getRelationsByStockId(stockId);
-    }
+	// GET /api/concept-relations/stock/{stockId}
+	@GetMapping("/stock/{stockId}")
+	public Flux<StockConceptRelation> getRelationsByStockId(@PathVariable Long stockId) {
+		return relationService.getRelationsByStockId(stockId);
+	}
 
-    // GET /api/concept-relations/category/{categoryId}
-    @GetMapping("/category/{categoryId}")
-    public Flux<StockConceptRelation> getRelationsByCategoryId(@PathVariable Long categoryId) {
-        return relationService.getRelationsByCategoryId(categoryId);
-    }
+	// GET /api/concept-relations/category/{categoryId}
+	@GetMapping("/category/{categoryId}")
+	public Flux<StockConceptRelation> getRelationsByCategoryId(@PathVariable Long categoryId) {
+		return relationService.getRelationsByCategoryId(categoryId);
+	}
 
-    // GET /api/concept-relations/stocks/2330/categories
-    @GetMapping("/stocks/{symbol}/categories")
-    public Flux<StockConceptCategory> getCategoriesBySymbol(@PathVariable String symbol) {
-        return relationService.getCategoriesBySymbol(symbol);
-    }
+	// GET /api/concept-relations/stocks/2330/categories
+	@GetMapping("/stocks/{symbol}/categories")
+	public Flux<StockConceptCategory> getCategoriesBySymbol(@PathVariable String symbol) {
+		return relationService.getCategoriesBySymbol(symbol);
+	}
 
-    // POST /api/concept-relations
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<StockConceptRelation> createRelation(@RequestBody StockConceptRelation relation) {
-        return relationService.createRelation(relation);
-    }
+	// POST /api/concept-relations
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public Mono<StockConceptRelation> createRelation(@RequestBody StockConceptRelation relation) {
+		return relationService.createRelation(relation);
+	}
 
-    // PUT /api/concept-relations/{id}
-    @PutMapping("/{id}")
-    public Mono<StockConceptRelation> updateRelation(
-            @PathVariable Long id,
-            @RequestBody StockConceptRelation relation) {
-        return relationService.updateRelation(id, relation);
-    }
+	// PUT /api/concept-relations/{id}
+	@PutMapping("/{id}")
+	public Mono<StockConceptRelation> updateRelation(@PathVariable Long id, @RequestBody StockConceptRelation relation) {
+		return relationService.updateRelation(id, relation);
+	}
 
-    // DELETE /api/concept-relations/{id}
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteRelation(@PathVariable Long id) {
-        return relationService.deleteRelation(id);
-    }
+	// DELETE /api/concept-relations/{id}
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public Mono<Void> deleteRelation(@PathVariable Long id) {
+		return relationService.deleteRelation(id);
+	}
 }

@@ -1,7 +1,8 @@
 package com.anthonyfu.model.entity;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -19,12 +20,19 @@ import lombok.NoArgsConstructor;
 public class StockConceptCategory {
 
     @Id
+    @Column("id")
     private Long id;
 
-    private String code;        // 分類代碼 (AI, NVIDIA, APPLE ...)
-    private String name;        // 中文名稱
-    private String description;
+    @Column("code")
+    private String code;              // 分類代碼 (AI, NVIDIA, APPLE ...)
 
+    @Column("name")
+    private String name;              // 中文名稱
+
+    @Column("description")
+    private String description;       // 分類說明
+
+    @CreatedDate
     @Column("created_at")
-    private ZonedDateTime createdAt;
+    private LocalDateTime createdAt;  // 建立時間
 }

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>影片庫 - Stock Observation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { background-color: #0f172a; }
+    ::-webkit-scrollbar { height: 6px; width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .row-scroll { scroll-behavior: smooth; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    // ── 常數 ─────────────────────────────────────────────
+    const API = '/api';
+    const goDetail = filename => { window.location.href = `${API}/video-detail.html?file=${encodeURIComponent(filename)}`; };
+
+    // ── 工具 ─────────────────────────────────────────────
+    const fmtSize = bytes => {
+      if (!bytes) return '--';
+      const mb = bytes / (1024 * 1024);
+      return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
+    };
+
+    // ── VideoCard：滑鼠移入自動預覽播放（Netflix 風格）──────
+    const VideoCard = ({ video }) => {
+      const videoRef = useRef(null);
+
+      const handleEnter = () => {
+        const el = videoRef.current;
+        if (!el) return;
+        el.currentTime = 0;
+        el.play().catch(() => {});
+      };
+      const handleLeave = () => {
+        const el = videoRef.current;
+        if (!el) return;
+        el.pause();
+        el.currentTime = 0.5;
+      };
+      const handleLoaded = () => {
+        const el = videoRef.current;
+        if (el) el.currentTime = 0.5; // 顯示第一幀作為縮圖
+      };
+
+      return (
+        <div
+          onClick={() => goDetail(video.filename)}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          className="group relative w-56 shrink-0 cursor-pointer select-none"
+        >
+          <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-800 border border-slate-700 group-hover:border-red-500 transition-all group-hover:scale-105 group-hover:z-10">
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              onLoadedMetadata={handleLoaded}
+              className="w-full h-full object-cover pointer-events-none"
+            />
+          </div>
+          <p className="mt-2 text-sm font-medium text-slate-200 truncate">{video.title}</p>
+          <p className="text-xs text-slate-500 truncate">{video.category}</p>
+        </div>
+      );
+    };
+
+    // ── CategoryRow：Netflix 風格橫向捲動列 ─────────────────
+    const CategoryRow = ({ category, videos }) => {
+      const scrollRef = useRef(null);
+      const scrollBy = dir => { scrollRef.current?.scrollBy({ left: dir * 640, behavior: 'smooth' }); };
+
+      return (
+        <section className="mb-8">
+          <h2 className="text-slate-200 font-semibold mb-3 px-1">{category}</h2>
+          <div className="relative group/row">
+            <button onClick={() => scrollBy(-1)}
+              className="hidden group-hover/row:flex items-center justify-center absolute left-0 top-0 bottom-0 w-10 bg-slate-900/70 hover:bg-slate-900 text-white z-20">‹</button>
+            <div ref={scrollRef} className="row-scroll flex gap-4 overflow-x-auto pb-2">
+              {videos.map(v => <VideoCard key={v.filename} video={v} />)}
+            </div>
+            <button onClick={() => scrollBy(1)}
+              className="hidden group-hover/row:flex items-center justify-center absolute right-0 top-0 bottom-0 w-10 bg-slate-900/70 hover:bg-slate-900 text-white z-20">›</button>
+          </div>
+        </section>
+      );
+    };
+
+    // ── App ───────────────────────────────────────────────
+    const App = () => {
+      const [videos, setVideos]   = useState([]);
+      const [status, setStatus]   = useState('loading');
+      const [keyword, setKeyword] = useState('');
+
+      useEffect(() => {
+        fetch(`${API}/video/list`)
+          .then(r => { if (!r.ok) throw new Error('load failed'); return r.json(); })
+          .then(data => { setVideos(data || []); setStatus('idle'); })
+          .catch(() => setStatus('error'));
+      }, []);
+
+      const filtered = useMemo(() => {
+        const kw = keyword.trim().toLowerCase();
+        if (!kw) return videos;
+        return videos.filter(v =>
+          v.title?.toLowerCase().includes(kw) ||
+          v.description?.toLowerCase().includes(kw) ||
+          v.category?.toLowerCase().includes(kw)
+        );
+      }, [videos, keyword]);
+
+      const grouped = useMemo(() => {
+        const map = new Map();
+        filtered.forEach(v => {
+          const cat = v.category || '未分類';
+          if (!map.has(cat)) map.set(cat, []);
+          map.get(cat).push(v);
+        });
+        return Array.from(map.entries());
+      }, [filtered]);
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+          {/* Header */}
+          <header className="border-b border-slate-800 px-6 py-4 sticky top-0 bg-slate-900/95 backdrop-blur z-30">
+            <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-2xl">🎬</span>
+                <div>
+                  <h1 className="font-bold text-slate-100 leading-tight">影片庫</h1>
+                  <p className="text-slate-500 text-xs">Video Library</p>
+                </div>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <input
+                  value={keyword}
+                  onChange={e => setKeyword(e.target.value)}
+                  placeholder="搜尋影片標題、分類..."
+                  className="w-full bg-slate-700/60 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500 focus:bg-slate-700 transition-all"
+                />
+              </div>
+              <a href={`${API}/video-admin.html`} className="text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">⚙️ 後台管理</a>
+              <a href={`${API}/index.html`} className="text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">📈 股票儀表板</a>
+            </div>
+          </header>
+
+          {/* Main */}
+          <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1">
+            {status === 'loading' && (
+              <div className="flex items-center justify-center h-64">
+                <div className="w-8 h-8 border-2 border-slate-600 border-t-red-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+            {status === 'error' && (
+              <div className="text-center text-slate-500 py-20">⚠ 無法載入影片清單，請確認後端服務是否啟動</div>
+            )}
+            {status === 'idle' && grouped.length === 0 && (
+              <div className="text-center text-slate-500 py-20">沒有符合的影片</div>
+            )}
+            {status === 'idle' && grouped.map(([category, list]) => (
+              <CategoryRow key={category} category={category} videos={list} />
+            ))}
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t border-slate-800 px-6 py-3 text-center text-slate-600 text-xs">
+            共 {videos.length} 部影片 · 影片資料透過後端 API 提供，可於 <a href={`${API}/video-admin.html`} className="text-slate-500 hover:text-slate-300 underline">後台管理頁面</a> 上傳擴充
+          </footer>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

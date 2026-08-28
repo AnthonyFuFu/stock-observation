@@ -19,14 +19,16 @@ import lombok.NoArgsConstructor;
 public class StockConceptRelation {
 
     @Id
+    @Column("id")
     private Long id;
 
     @Column("stock_id")
-    private Long stockId;
+    private Long stockId;         // 對應 stocks.id
 
     @Column("category_id")
-    private Long categoryId;
+    private Long categoryId;      // 對應 stock_concept_categories.id
 
+    @Column("weight")
     @Builder.Default
     private BigDecimal weight = BigDecimal.ONE;  // 關聯權重（1.0 = 主要概念股）
 }
