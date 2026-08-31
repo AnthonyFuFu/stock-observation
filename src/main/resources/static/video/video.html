@@ -4,15 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>影片庫 - Stock Observation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../common/tailwind-theme.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    body { background-color: #0f172a; }
-    ::-webkit-scrollbar { height: 6px; width: 6px; }
-    ::-webkit-scrollbar-track { background: #1e293b; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    body { background: radial-gradient(circle at 18% -10%, #1c2046 0%, #090a17 55%) fixed; }
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-track { background: #12142a; }
+    ::-webkit-scrollbar-thumb { background: #383b58; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6c5ce7; }
     .row-scroll { scroll-behavior: smooth; }
   </style>
 </head>
@@ -23,7 +28,7 @@
 
     // ── 常數 ─────────────────────────────────────────────
     const API = '/api';
-    const goDetail = filename => { window.location.href = `${API}/video-detail.html?file=${encodeURIComponent(filename)}`; };
+    const goDetail = filename => { window.location.href = `${API}/video/video-detail.html?file=${encodeURIComponent(filename)}`; };
 
     // ── 工具 ─────────────────────────────────────────────
     const fmtSize = bytes => {
@@ -152,7 +157,7 @@
                   className="w-full bg-slate-700/60 border border-slate-600 text-slate-100 placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500 focus:bg-slate-700 transition-all"
                 />
               </div>
-              <a href={`${API}/video-admin.html`} className="text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">⚙️ 後台管理</a>
+              <a href={`${API}/video/video-admin.html`} className="text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">⚙️ 後台管理</a>
               <a href={`${API}/index.html`} className="text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">📈 股票儀表板</a>
             </div>
           </header>
@@ -177,7 +182,7 @@
 
           {/* Footer */}
           <footer className="border-t border-slate-800 px-6 py-3 text-center text-slate-600 text-xs">
-            共 {videos.length} 部影片 · 影片資料透過後端 API 提供，可於 <a href={`${API}/video-admin.html`} className="text-slate-500 hover:text-slate-300 underline">後台管理頁面</a> 上傳擴充
+            共 {videos.length} 部影片 · 影片資料透過後端 API 提供，可於 <a href={`${API}/video/video-admin.html`} className="text-slate-500 hover:text-slate-300 underline">後台管理頁面</a> 上傳擴充
           </footer>
         </div>
       );

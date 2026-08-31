@@ -63,6 +63,14 @@ winget install ffmpeg
 推流
 ffmpeg -re -stream_loop -1 -i C:\Users\user\git\stock-observation\src\main\resources\videos\sample.mp4 -c copy -f flv rtmp://localhost:1935/room001
 
-# 瀏覽器觀看直播影片
-http://localhost:8080/api/live.html?room=room001
+# 瀏覽器觀看推流直播影片
+http://localhost:8080/api/live/watch.html?room=room001
+
+# 瀏覽器連結
+http://localhost:8080/api/index.html
+http://localhost:8080/api/stock/index.html
+http://localhost:8080/api/live/index.html
+http://localhost:8080/api/live/watch.html?room=roomxxxxxx
+http://localhost:8080/api/live/broadcast.html
+http://localhost:8080/api/video/video.html
 

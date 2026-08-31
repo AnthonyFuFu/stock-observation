@@ -4,15 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>影片播放 - Stock Observation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../common/tailwind-theme.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    body { background-color: #0f172a; }
-    ::-webkit-scrollbar { height: 6px; width: 6px; }
-    ::-webkit-scrollbar-track { background: #1e293b; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    body { background: radial-gradient(circle at 18% -10%, #1c2046 0%, #090a17 55%) fixed; }
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-track { background: #12142a; }
+    ::-webkit-scrollbar-thumb { background: #383b58; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6c5ce7; }
   </style>
 </head>
 <body>
@@ -23,8 +28,8 @@
     // ── 常數 ─────────────────────────────────────────────
     const API = '/api';
     const FILE = new URLSearchParams(window.location.search).get('file') || '';
-    const goDetail = filename => { window.location.href = `${API}/video-detail.html?file=${encodeURIComponent(filename)}`; };
-    const goList   = () => { window.location.href = `${API}/video.html`; };
+    const goDetail = filename => { window.location.href = `${API}/video/video-detail.html?file=${encodeURIComponent(filename)}`; };
+    const goList   = () => { window.location.href = `${API}/video/video.html`; };
 
     // ── 工具 ─────────────────────────────────────────────
     const fmtSize = bytes => {

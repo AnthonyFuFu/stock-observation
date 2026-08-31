@@ -1,0 +1,54 @@
+<style>
+    .topbar {
+        height: 64px;
+        background: rgba(18, 20, 42, 0.72);
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+    }
+    .topbar .logo {
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        background: var(--gradient-accent);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .topbar nav { display: flex; gap: 6px; margin-left: auto; }
+    .topbar nav a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 999px;
+        transition: all 0.18s ease;
+    }
+    .topbar nav a:hover { background: var(--border-subtle); color: var(--text-primary); }
+    .topbar nav a.primary {
+        background: var(--gradient-accent);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 8px 20px -6px rgba(108, 92, 231, 0.55);
+    }
+    .topbar nav a.primary:hover { filter: brightness(1.08); box-shadow: 0 10px 26px -6px rgba(108, 92, 231, 0.7); }
+    .topbar nav a.active { background: var(--border-subtle); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--border-strong); }
+</style>
+<div class="topbar">
+    <span class="logo">📊 Stock Observation</span>
+    <nav>
+        <a data-nav="stock" href="/api/stock/index.html">📈 股票</a>
+        <a data-nav="live" href="/api/live/index.html">📺 直播</a>
+        <a data-nav="video" href="/api/video/video.html">🎬 影片</a>
+        <a data-nav="broadcast" id="headerBroadcastLink" href="/api/live/broadcast.html" class="primary">🎥 我要開播</a>
+    </nav>
+</div>
