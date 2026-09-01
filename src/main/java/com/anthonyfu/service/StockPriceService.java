@@ -8,16 +8,30 @@ import com.anthonyfu.model.entity.StockPrice;
 import com.anthonyfu.repository.StockPriceRepository;
 import com.anthonyfu.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
-public class StockPriceService {
+public class StockPriceService extends AbstractReactiveCrudService<StockPrice, Long, StockPriceRepository> {
 
     private final StockPriceRepository stockPriceRepository;
     private final StockRepository stockRepository;
+
+    public StockPriceService(StockPriceRepository stockPriceRepository, StockRepository stockRepository) {
+        super(stockPriceRepository);
+        this.stockPriceRepository = stockPriceRepository;
+        this.stockRepository = stockRepository;
+    }
+
+    @Override
+    protected Long extractId(StockPrice entity) {
+        return entity.getId();
+    }
+
+    @Override
+    protected void assignId(StockPrice entity, Long id) {
+        entity.setId(id);
+    }
 
     public Flux<StockPrice> getPricesBySymbol(String symbol) {
         return stockRepository.findBySymbol(symbol)
@@ -40,11 +54,7 @@ public class StockPriceService {
     }
 
     public Mono<StockPrice> updatePrice(Long id, StockPrice price) {
-        return stockPriceRepository.findById(id)
-                .flatMap(existing -> {
-                    price.setId(id);
-                    return stockPriceRepository.save(price);
-                });
+        return updateById(id, price);
     }
 
     public Mono<Void> deletePrice(Long id) {

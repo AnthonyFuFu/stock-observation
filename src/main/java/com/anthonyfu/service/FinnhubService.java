@@ -17,11 +17,13 @@ import com.anthonyfu.model.finnhub.FinnhubCandle;
 import com.anthonyfu.model.finnhub.FinnhubProfile;
 import com.anthonyfu.model.finnhub.FinnhubQuote;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
-public class FinnhubService {
+public class FinnhubService implements StockCandleProvider {
 
     private final WebClient webClient;
 
@@ -34,6 +36,16 @@ public class FinnhubService {
                 .build();
     }
 
+    @Override
+    public String providerKey() {
+        return "finnhub";
+    }
+
+    @Override
+    public Mono<List<CandlePoint>> getCandles(String symbol) {
+        return getCandles(symbol, "D", 90);
+    }
+
     public Mono<FinnhubQuote> getQuote(String symbol) {
         return webClient.get()
                 .uri(uri -> uri.path("/quote")
@@ -43,7 +55,7 @@ public class FinnhubService {
                 .retrieve()
                 .bodyToMono(FinnhubQuote.class)
                 .onErrorResume(e -> {
-                    System.err.println("Finnhub quote error [" + symbol + "]: " + e.getMessage());
+                    log.error("Finnhub quote error [{}]", symbol, e);
                     return Mono.empty();
                 });
     }
@@ -64,7 +76,7 @@ public class FinnhubService {
                 .bodyToMono(FinnhubCandle.class)
                 .map(this::toCandlePoints)
                 .onErrorResume(e -> {
-                    System.err.println("Finnhub candle error [" + symbol + "]: " + e.getMessage());
+                    log.error("Finnhub candle error [{}]", symbol, e);
                     return Mono.just(Collections.emptyList());
                 });
     }
@@ -78,7 +90,7 @@ public class FinnhubService {
                 .retrieve()
                 .bodyToMono(FinnhubProfile.class)
                 .onErrorResume(e -> {
-                    System.err.println("Finnhub profile error [" + symbol + "]: " + e.getMessage());
+                    log.error("Finnhub profile error [{}]", symbol, e);
                     return Mono.empty();
                 });
     }

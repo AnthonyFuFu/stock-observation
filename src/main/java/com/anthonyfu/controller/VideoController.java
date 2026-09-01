@@ -3,6 +3,8 @@ package com.anthonyfu.controller;
 import com.anthonyfu.model.VideoInfo;
 import com.anthonyfu.service.VideoService;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,14 +15,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/video")
 public class VideoController {
 
 	private final VideoService videoService;
-
-	public VideoController(VideoService videoService) {
-		this.videoService = videoService;
-	}
 
 	/** 取得所有影片清單（標題、簡介、分類、播放連結等） */
 	@GetMapping("/list")

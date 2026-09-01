@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: stock-observation
+
+  # R2DBC PostgreSQL
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/stockdb
+    username: postgres
+    password: 123456
+    pool:
+      initial-size: 5
+      max-size: 20
+
+  # WebFlux
+  webflux:
+    base-path: /api
+    multipart:
+      max-in-memory-size: 1MB
+      max-disk-usage-per-part: 2GB # 允許較大的影片檔案上傳
+
+server:
+  port: 8080
+
+# log 設定改由 logback-spring.xml 統一管理，這裡保留備用
+#logging:
+#  level:
+#    org.springframework.data.r2dbc: DEBUG
+#    io.r2dbc.postgresql: DEBUG
+
+# Finnhub API Key
+finnhub:
+  api-key: d8cqgvpr01qt0j1hualgd8cqgvpr01qt0j1huam0
+
+# noinspection YAML_UNKNOWN_PROPERTY
+app:
+  video:
+    # 統一與內建範例影片放同一個資料夾，上傳的影片會直接寫進 src/main/resources/videos
+    upload-dir: src/main/resources/videos

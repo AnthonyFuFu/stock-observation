@@ -23,8 +23,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/stocks/{symbol}/prices")
 @RequiredArgsConstructor
+@RequestMapping("/stocks/{symbol}/prices")
 public class StockPriceController {
 
     private final StockPriceService stockPriceService;

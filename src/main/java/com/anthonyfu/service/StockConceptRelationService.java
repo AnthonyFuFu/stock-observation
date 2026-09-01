@@ -7,16 +7,32 @@ import com.anthonyfu.model.entity.StockConceptRelation;
 import com.anthonyfu.repository.StockConceptRelationRepository;
 import com.anthonyfu.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
-public class StockConceptRelationService {
+public class StockConceptRelationService
+        extends AbstractReactiveCrudService<StockConceptRelation, Long, StockConceptRelationRepository> {
 
     private final StockConceptRelationRepository relationRepository;
     private final StockRepository stockRepository;
+
+    public StockConceptRelationService(StockConceptRelationRepository relationRepository,
+            StockRepository stockRepository) {
+        super(relationRepository);
+        this.relationRepository = relationRepository;
+        this.stockRepository = stockRepository;
+    }
+
+    @Override
+    protected Long extractId(StockConceptRelation entity) {
+        return entity.getId();
+    }
+
+    @Override
+    protected void assignId(StockConceptRelation entity, Long id) {
+        entity.setId(id);
+    }
 
     public Flux<StockConceptRelation> getRelationsByStockId(Long stockId) {
         return relationRepository.findByStockId(stockId);
@@ -36,11 +52,7 @@ public class StockConceptRelationService {
     }
 
     public Mono<StockConceptRelation> updateRelation(Long id, StockConceptRelation relation) {
-        return relationRepository.findById(id)
-                .flatMap(existing -> {
-                    relation.setId(id);
-                    return relationRepository.save(relation);
-                });
+        return updateById(id, relation);
     }
 
     public Mono<Void> deleteRelation(Long id) {

@@ -25,8 +25,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/stocks")
 @RequiredArgsConstructor
+@RequestMapping("/stocks")
 public class StockController {
 
     private final StockService stockService;

@@ -18,8 +18,8 @@ import java.util.Set;
 
 /**
  * 統一管理影片實體檔案的存放位置：
- * - 內建範例影片放在 classpath:videos/（隨專案打包，唯讀）
- * - 後台上傳的影片存放在外部資料夾 app.video.upload-dir（可寫入，不受 jar 打包限制）
+ * - 預設情況下，內建範例影片與後台上傳的影片都存放在同一個資料夾（app.video.upload-dir，預設 src/main/resources/videos）
+ * - 找不到時會再退回 classpath:videos/ 尋找（供打包成 jar 部署、無法寫入該路徑時的備援）
  */
 @Service
 public class VideoStorageService {
@@ -33,7 +33,7 @@ public class VideoStorageService {
 
 	public VideoStorageService(
 			ResourcePatternResolver resourcePatternResolver,
-			@Value("${app.video.upload-dir:uploads/videos}") String uploadDir
+			@Value("${app.video.upload-dir:src/main/resources/videos}") String uploadDir
 	) {
 		this.resourcePatternResolver = resourcePatternResolver;
 		this.uploadDir = Paths.get(uploadDir).toAbsolutePath().normalize();

@@ -18,8 +18,8 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/finnhub")
 @RequiredArgsConstructor
+@RequestMapping("/finnhub")
 public class FinnhubController {
 
 	private final FinnhubService finnhubService;

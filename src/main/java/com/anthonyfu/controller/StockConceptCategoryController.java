@@ -20,8 +20,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/concept-categories")
 @RequiredArgsConstructor
+@RequestMapping("/concept-categories")
 public class StockConceptCategoryController {
 
     private final StockConceptCategoryService categoryService;

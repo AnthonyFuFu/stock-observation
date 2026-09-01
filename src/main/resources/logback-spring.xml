@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+    <property name="LOG_FILE" value="${LOG_FILE:-logs/stock-observation.log}" />
+
+    <!-- Console 只顯示 INFO 以上，避免 R2DBC/SQL 等 DEBUG 訊息洗版 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 檔案保留完整層級（含 DEBUG），供需要時查閱，並每日/每 10MB 輪替 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/stock-observation-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- R2DBC / SQL 除錯訊息只寫進檔案，不會出現在 console -->
+    <logger name="org.springframework.data.r2dbc" level="DEBUG" />
+    <logger name="io.r2dbc.postgresql" level="DEBUG" />
+
+    <!-- 應用程式自己的 log（含 LoggingAspect 的方法耗時紀錄）也只在檔案留 DEBUG 細節 -->
+    <logger name="com.anthonyfu" level="DEBUG" />
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>

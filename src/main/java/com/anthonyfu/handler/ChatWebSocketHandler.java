@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 每個直播間（roomId）有獨立的訊息廣播頻道。
  * 觀眾連線時自動加入對應房間，斷線時自動離開。
  */
+@Slf4j
 @Component
 public class ChatWebSocketHandler implements WebSocketHandler {
 
@@ -93,6 +95,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     "time", timestamp
             ));
         } catch (Exception e) {
+            log.warn("無法解析聊天訊息，將原樣廣播: {}", rawMessage, e);
             return rawMessage;
         }
     }

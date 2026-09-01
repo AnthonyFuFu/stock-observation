@@ -3,21 +3,20 @@ package com.anthonyfu.controller;
 import com.anthonyfu.handler.ChatWebSocketHandler;
 import com.anthonyfu.model.LiveRoom;
 import com.anthonyfu.service.LiveRoomService;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/rooms")
 public class LiveRoomController {
 
 	private final LiveRoomService liveRoomService;
 	private final ChatWebSocketHandler chatHandler;
-
-	public LiveRoomController(LiveRoomService liveRoomService, ChatWebSocketHandler chatHandler) {
-		this.liveRoomService = liveRoomService;
-		this.chatHandler = chatHandler;
-	}
 
 	/** 建立直播間 */
 	@PostMapping

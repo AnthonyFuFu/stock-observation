@@ -10,17 +10,33 @@ import com.anthonyfu.repository.StockPriceRepository;
 import com.anthonyfu.repository.StockQuoteRepository;
 import com.anthonyfu.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
-public class StockService {
+public class StockService extends AbstractReactiveCrudService<Stock, Long, StockRepository> {
 
     private final StockRepository stockRepository;
     private final StockPriceRepository stockPriceRepository;
     private final StockQuoteRepository stockQuoteRepository;
+
+    public StockService(StockRepository stockRepository, StockPriceRepository stockPriceRepository,
+            StockQuoteRepository stockQuoteRepository) {
+        super(stockRepository);
+        this.stockRepository = stockRepository;
+        this.stockPriceRepository = stockPriceRepository;
+        this.stockQuoteRepository = stockQuoteRepository;
+    }
+
+    @Override
+    protected Long extractId(Stock entity) {
+        return entity.getId();
+    }
+
+    @Override
+    protected void assignId(Stock entity, Long id) {
+        entity.setId(id);
+    }
 
     public Flux<Stock> getAllStocks() {
         return stockRepository.findAll();
@@ -57,15 +73,10 @@ public class StockService {
     }
 
     public Mono<Stock> updateStock(String symbol, Stock stock) {
-        return stockRepository.findBySymbol(symbol)
-                .flatMap(existing -> {
-                    stock.setId(existing.getId());
-                    return stockRepository.save(stock);
-                });
+        return updateByLookup(stockRepository.findBySymbol(symbol), stock);
     }
 
     public Mono<Void> deleteStock(String symbol) {
-        return stockRepository.findBySymbol(symbol)
-                .flatMap(stockRepository::delete);
+        return deleteByLookup(stockRepository.findBySymbol(symbol));
     }
 }

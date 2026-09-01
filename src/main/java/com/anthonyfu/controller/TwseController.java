@@ -1,6 +1,5 @@
 package com.anthonyfu.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,18 +14,16 @@ import com.anthonyfu.model.twse.MarketInfo;
 import com.anthonyfu.model.twse.StockDailyInfo;
 import com.anthonyfu.service.TwseService;
 
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/twse")
 public class TwseController {
 	
-	@Autowired
-    private TwseService twseService;
+    private final TwseService twseService;
     
-    public TwseController(TwseService twseService) {
-        this.twseService = twseService;
-    }
     // http://localhost:8080/api/twse/stock/2330
     @GetMapping("/stock/{code}")
     public Mono<StockDailyInfo> getStockInfo(@PathVariable String code) {

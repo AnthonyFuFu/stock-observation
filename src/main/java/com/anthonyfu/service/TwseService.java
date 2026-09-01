@@ -15,10 +15,12 @@ import com.anthonyfu.model.twse.CompanyInfo;
 import com.anthonyfu.model.twse.MarketInfo;
 import com.anthonyfu.model.twse.StockDailyInfo;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
-public class TwseService {
+public class TwseService implements StockCandleProvider {
 
     private final WebClient webClient;
     
@@ -27,6 +29,16 @@ public class TwseService {
                 .baseUrl("https://www.twse.com.tw")
                 .defaultHeader("User-Agent", "Mozilla/5.0")
                 .build();
+    }
+
+    @Override
+    public String providerKey() {
+        return "twse";
+    }
+
+    @Override
+    public Mono<List<CandlePoint>> getCandles(String symbol) {
+        return getStockCandles(symbol);
     }
     
     // 獲取個股日成交資訊
@@ -42,7 +54,7 @@ public class TwseService {
                         .build())
                 .retrieve()
                 .bodyToMono(StockDailyInfo.class)
-                .doOnError(error -> System.err.println("Error fetching TWSE data: " + error.getMessage()));
+                .doOnError(error -> log.error("Error fetching TWSE data [{}]", stockCode, error));
     }
     
     // 獲取大盤資訊
@@ -55,7 +67,7 @@ public class TwseService {
                         .build())
                 .retrieve()
                 .bodyToMono(MarketInfo.class)
-                .doOnError(error -> System.err.println("Error fetching market data: " + error.getMessage()));
+                .doOnError(error -> log.error("Error fetching market data", error));
     }
     
     // 獲取上市公司基本資料
@@ -67,7 +79,7 @@ public class TwseService {
                         .build())
                 .retrieve()
                 .bodyToMono(CompanyInfo.class)
-                .doOnError(error -> System.err.println("Error fetching company info: " + error.getMessage()));
+                .doOnError(error -> log.error("Error fetching company info [{}]", query, error));
     }
 
     // 獲取個股日K棒資料（當月，ROC 民國年格式）

@@ -3,6 +3,8 @@ package com.anthonyfu.controller;
 import com.anthonyfu.model.VideoInfo;
 import com.anthonyfu.service.VideoUploadService;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,17 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import reactor.core.publisher.Mono;
 
-/** 後台影片管理：上傳影片檔案並同時寫入 videos 資料表、刪除影片 */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/video/admin")
 public class VideoAdminController {
 
 	private final VideoUploadService videoUploadService;
-
-	public VideoAdminController(VideoUploadService videoUploadService) {
-		this.videoUploadService = videoUploadService;
-	}
-
+	
+	/** 後台影片管理：上傳影片檔案並同時寫入 videos 資料表、刪除影片 */
 	@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public Mono<VideoInfo> upload(
 			@RequestPart("file") FilePart file,

@@ -6,17 +6,15 @@ import org.springframework.web.bind.annotation.*;
 
 import com.anthonyfu.service.VideoStreamService;
 
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/video")
 public class VideoStreamController {
 
 	private final VideoStreamService videoStreamService;
-
-	public VideoStreamController(VideoStreamService videoStreamService) {
-		this.videoStreamService = videoStreamService;
-	}
 
 	/** 串流本地影片（支援 Range / 拖曳進度條） */
 	@GetMapping("/local/{filename}")

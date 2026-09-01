@@ -4,18 +4,29 @@ import org.springframework.stereotype.Service;
 
 import com.anthonyfu.model.entity.StockQuote;
 import com.anthonyfu.repository.StockQuoteRepository;
-import com.anthonyfu.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
-public class StockQuoteService {
+public class StockQuoteService extends AbstractReactiveCrudService<StockQuote, Long, StockQuoteRepository> {
 
     private final StockQuoteRepository stockQuoteRepository;
-    private final StockRepository stockRepository;
+
+    public StockQuoteService(StockQuoteRepository stockQuoteRepository) {
+        super(stockQuoteRepository);
+        this.stockQuoteRepository = stockQuoteRepository;
+    }
+
+    @Override
+    protected Long extractId(StockQuote entity) {
+        return entity.getId();
+    }
+
+    @Override
+    protected void assignId(StockQuote entity, Long id) {
+        entity.setId(id);
+    }
 
     public Mono<StockQuote> getQuoteBySymbol(String symbol) {
         return stockQuoteRepository.findByStockSymbol(symbol);
@@ -38,11 +49,7 @@ public class StockQuoteService {
     }
 
     public Mono<StockQuote> updateQuote(Long id, StockQuote quote) {
-        return stockQuoteRepository.findById(id)
-                .flatMap(existing -> {
-                    quote.setId(id);
-                    return stockQuoteRepository.save(quote);
-                });
+        return updateById(id, quote);
     }
 
     public Mono<Void> deleteQuote(Long id) {
