@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: stockdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: "123456"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+
+      - name: Load DB schema
+        run: |
+          psql -h 127.0.0.1 -p 5432 -U postgres -d stockdb -f "01_DB.sql"
+          psql -h 127.0.0.1 -p 5432 -U postgres -d stockdb -f "02_DB.sql"
+          psql -h 127.0.0.1 -p 5432 -U postgres -d stockdb -f "Video.sql"
+        env:
+          PGPASSWORD: "123456"
+
+      - name: Run tests
+        run: ./mvnw -B test
+
+      - name: Package application
+        run: ./mvnw -B package -DskipTests
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
